@@ -33,6 +33,7 @@ jobs:
     steps:
       - name: Ensure _build exists
         run: mkdir -p _build
+      - name: Add html folder
         run: mkdir -p _build/html
       - uses: actions/checkout@v4
       - name: Setup Pages
