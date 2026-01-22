@@ -1,7 +1,4 @@
-# This file was created automatically with `jupyter book init --gh-pages` 🪄 💚
-# Ensure your GitHub Pages settings for this repository are set to deploy with **GitHub Actions**.
-
-name: Jupyter Book (via myst) GitHub Pages Deploy
+name: Jupyter Book v2 (MyST) GitHub Pages Deploy
 
 on:
   push:
@@ -9,7 +6,6 @@ on:
   workflow_dispatch:
 
 env:
-  # If your site lives at https://<org>.github.io/<repo>, keep this:
   BASE_URL: /${{ github.event.repository.name }}
 
 permissions:
@@ -38,22 +34,38 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: Install Jupyter Book (via myst)
-        run: npm install -g jupyter-book
+      - name: Install MyST Markdown (mystmd)
+        run: npm install -g mystmd
 
       - name: Build HTML Assets
+        id: build
         run: |
-          # Some versions expect a path argument, others build from CWD:
-          jupyter-book build --html . || jupyter-book build --html
+          set -euxo pipefail
 
-          # Fail here (with a clear error) instead of later during upload:
+          # Find the MyST/Jupyter Book v2 project root
+          MYST_FILE="$(find . -maxdepth 3 -name myst.yml -print -quit || true)"
+          if [ -z "$MYST_FILE" ]; then
+            echo "ERROR: Could not find myst.yml (Jupyter Book v2 requires it)."
+            echo "Repo contents:"
+            ls -lah
+            exit 1
+          fi
+
+          MYST_DIR="$(cd "$(dirname "$MYST_FILE")" && pwd)"
+          echo "Building from: $MYST_DIR"
+
+          cd "$MYST_DIR"
+          myst build --html
+
           test -d _build/html
           ls -lah _build/html
+
+          echo "html_path=$MYST_DIR/_build/html" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _build/html
+          path: ${{ steps.build.outputs.html_path }}
 
       - name: Deploy to GitHub Pages
         id: deployment
