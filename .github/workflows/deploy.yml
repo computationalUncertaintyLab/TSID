@@ -31,24 +31,42 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure _build exists
-        run: mkdir -p _build
-      - name: Add html folder
-        run: mkdir -p _build/html
-      - uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18.x
-      - name: Install Jupyter Book (via myst)
-        run: npm install -g jupyter-book
-      - name: Build HTML Assets
-        run: jupyter-book build --html
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './_build/html'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Setup Pages
+    uses: actions/configure-pages@v3
+
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 18.x
+
+  - name: Show repo files (find config)
+    run: |
+      ls -lah
+      echo "=== myst config ==="
+      find . -maxdepth 3 -name "myst.y*ml" -print
+      echo "=== classic jupyter-book config ==="
+      find . -maxdepth 3 -name "_config.yml" -o -name "_toc.yml" -print
+
+  # If you're using MyST / jupyter-book (npm)
+  - name: Install jupyter-book (via myst)
+    run: npm install -g jupyter-book
+
+  - name: Build HTML Assets (MyST)
+    run: jupyter-book build --html .
+
+  - name: Debug build output
+    run: |
+      ls -lah _build || true
+      ls -lah _build/html || true
+
+  - name: Upload artifact
+    uses: actions/upload-pages-artifact@v3
+    with:
+      path: ./_build/html
+
+  - name: Deploy to GitHub Pages
+    id: deployment
+    uses: actions/deploy-pages@v4
+
