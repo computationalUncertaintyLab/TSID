@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 if __name__ == "__main__":
     d1 = pd.read_csv("2020_US_Region_Mobility_Report.csv")
